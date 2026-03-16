@@ -1,56 +1,29 @@
-# Core scientific computing
+# Core scientific stack
 numpy
 scipy
-sympy
+matplotlib
 pandas
 
-# Scientific visualization
-matplotlib
-seaborn
-plotly
+# Jupyter
+jupyterlab
+ipykernel
+ipywidgets
 
-# JAX ecosystem (PINNs)
+# Deep learning
+torch
 jax
-jaxlib
-optax
-flax
-equinox
-chex
-
-# Scientific computing utilities
-scikit-learn
-tqdm
-
-# Differential equations / scientific modeling
-diffrax
-
-# Automatic differentiation / symbolic tools
-autograd
-
-# Taichi physics simulation
-taichi
 
 # PINN helper libraries
 deepxde
 
-# Data handling
-h5py
-xarray
-netcdf4
-
-# Development tools
-ipython
-jupyterlab
-notebook
-
 # Experiment tracking / logging
 tensorboard
-wandb
 
-# Configuration management
-hydra-core
-omegaconf
+# Automatic differentiation / symbolic tools
+autograd
 
-# File / serialization utilities
-pyyaml
-dill
+# Useful for JAX/PINNs training loops
+optax
+
+# Small quality-of-life helpers
+tqdm
