@@ -8,6 +8,6 @@ We are solving a simple 1D Heat equation
 u_t = \alpha u_{xx}
 
 or 
-
+$$
 \frac{\partial u}{\partial t} = \alpha \frac{\partial^2 u}{\partial x^2}
-
+$$
