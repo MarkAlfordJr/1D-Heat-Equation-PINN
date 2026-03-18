@@ -1,34 +1,40 @@
-# Import JAX itself
+# ============================================================
+# 1. Import Libraries
+# ============================================================
+import numpy as np
+import pandas as pd
 import jax
-
-# Import JAX's NumPy-like API
-# This behaves like NumPy, but works with JAX transformations like grad, vmap, and jit
 import jax.numpy as jnp
-
+import matplotlib.pyplot as plt
+import autograd
 # Optax is a gradient optimization library built for JAX
 # We use it for the Adam optimizer
 import optax
 
-# Matplotlib is only for plotting results after training
-import matplotlib.pyplot as plt
-
-# partial is useful in many JAX projects, though it is not strictly necessary here
-from functools import partial
-
-
 # ============================================================
-# 1. Problem setup
+# 2. Problem Setup
 # ============================================================
 
-# Diffusion coefficient in the heat equation
-# The PDE is u_t = alpha * u_xx
-alpha = 0.1
-
+""" 
+1. 1-D Heat Equation
+2. u_t = alpha * u_xx
+3. setup
+    domains
+    diffusion coefficient for PDE (if needed)
+    interior collocation points
+    boundary-condition points
+    initial-condition points
+4. define NN layer
+"""
+# spatial domain for u(x,t)
 # Define spatial domain: x goes from 0 to 1
-x_min, x_max = 0.0, 1.0
+x_min, x_max = 0.0, 0.1
 
 # Define time domain: t goes from 0 to 1
 t_min, t_max = 0.0, 1.0
+
+# Diffusion coefficient in the heat equation
+alpha = 0.1
 
 # Number of interior collocation points used to enforce the PDE residual
 N_f = 1024
@@ -48,23 +54,27 @@ epochs = 5000
 # How often to print training progress
 print_every = 500
 
-# Neural network architecture:
+# NN architecture Layer
 # input dimension = 2 because inputs are (x, t)
+# 3 hidden layers with 64 nodes each
 # output dimension = 1 because output is scalar u(x,t)
 layer_sizes = [2, 64, 64, 64, 1]
 
-
 # ============================================================
-# 2. Simple MLP from scratch
+# 3. Neural Network Architecture
 # ============================================================
 
-def init_mlp(layer_sizes, key):
+def init_mlp(layer_size, key):
     """
-    Initialize MLP parameters.
+        Creates the Parameters needed for the NN forward pass
 
-    Returns:
+        Args: 
+        - layers_size = layer dimension for the NN architecture
+        - key = a random key per layer
+
+        Returns:
         params = [(W1, b1), (W2, b2), ...]
-    where each W is a weight matrix and each b is a bias vector.
+            where each W is a weight matrix and each b is a bias vector.
     """
     params = []
 
@@ -89,19 +99,18 @@ def init_mlp(layer_sizes, key):
 
     return params
 
-
 def mlp_forward(params, x):
     """
-    Forward pass through the neural network for ONE input vector x.
+        Forward passes the created Parameters in order to get a potential solution
 
-    Args:
-        params: list of (W, b) pairs
-        x: input vector of shape (2,) here, since input is [x, t]
+        Args: 
+        - params = array of weights and biases created from the NN architecture layers
+        - x = input vector of size (2,) since the PDE is u(x,t)
 
-    Returns:
-        scalar output u(x,t)
+        Returns:
+        scalar output = u(x,t). the potential solution to PDE that goes into the Physics Residual
     """
-    # 'a' stands for the current activation vector flowing through the network
+      # 'a' stands for the current activation vector flowing through the network
     a = x
 
     # Iterate through each layer
@@ -120,9 +129,8 @@ def mlp_forward(params, x):
     # Final output has shape (1,), so take the first element
     return a[0]
 
-
 # ============================================================
-# 3. PINN model u_theta(x, t)
+# 4. Get Potential Solution, U_theta
 # ============================================================
 
 def u_model(params, x, t):
@@ -137,10 +145,10 @@ def u_model(params, x, t):
     # Feed [x, t] through the MLP
     return mlp_forward(params, inp)
 
+# ============================================================
+# 5. Compute Physics Residual
+# ============================================================
 
-# ============================================================
-# 4. Autodiff: derivatives needed for PDE residual
-# ============================================================
 
 def u_t(params, x, t):
     """
@@ -177,7 +185,6 @@ def pde_residual(params, x, t):
     """
     return u_t(params, x, t) - alpha * u_xx(params, x, t)
 
-
 # Vectorize u_model over batches of x and t values
 # in_axes=(None, 0, 0) means:
 # - params is shared (not batched)
@@ -187,7 +194,6 @@ u_model_vmap = jax.vmap(u_model, in_axes=(None, 0, 0))
 
 # Vectorize PDE residual the same way
 pde_residual_vmap = jax.vmap(pde_residual, in_axes=(None, 0, 0))
-
 
 # ============================================================
 # 5. Exact solution (for evaluation only)
@@ -206,7 +212,6 @@ def exact_solution(x, t):
     """
     return jnp.exp(-(jnp.pi ** 2) * alpha * t) * jnp.sin(jnp.pi * x)
 
-
 # ============================================================
 # 6. Sampling points
 # ============================================================
@@ -217,6 +222,10 @@ def sample_training_points(key, N_f, N_bc, N_ic):
     1. PDE residual inside the domain
     2. Boundary conditions on x=0 and x=1
     3. Initial condition on t=0
+
+    Args: 
+        - N_f, N_bc, N_ic = collocation points described in problem 
+        - key = random key to be split up
     """
 
     # Split one random key into four smaller keys
@@ -257,6 +266,7 @@ def sample_training_points(key, N_f, N_bc, N_ic):
     t_ic = jnp.zeros((N_ic,))
 
     return x_f, t_f, x_bc_left, x_bc_right, t_bc, x_ic, t_ic
+
 
 
 # ============================================================
