@@ -1,8 +1,23 @@
 import jax
 import jax.numpy as jnp
-from models import mlp_forward
+from src.models import MLPModel
+import yaml
 
-def u_model(params, x, t):
+
+def load_config(path="config.yaml"):
+    with open(path, "r") as f:
+        return yaml.safe_load(f)
+    
+# Create a master random key
+key = jax.random.PRNGKey(0)
+
+# Split it so one part initializes the network
+key, init_key = jax.random.split(key)
+    
+config = load_config()
+model = MLPModel(config,key)
+
+def u_theta(params, x, t):
     """
     Define the PINN approximation u_theta(x,t).
 
@@ -12,7 +27,7 @@ def u_model(params, x, t):
     inp = jnp.array([x, t])
 
     # Feed [x, t] through the MLP
-    return mlp_forward(params, inp)
+    return model.mlp_forward(params, inp)
 
 
 def u_t(params, x, t):
@@ -22,14 +37,14 @@ def u_t(params, x, t):
     jax.grad differentiates a scalar-output function with respect
     to its argument. Here the variable is tt.
     """
-    return jax.grad(lambda tt: u_model(params, x, tt))(t)
+    return jax.grad(lambda tt: u_theta(params, x, tt))(t)
 
 
 def u_x(params, x, t):
     """
     Compute partial derivative of u with respect to x.
     """
-    return jax.grad(lambda xx: u_model(params, xx, t))(x)
+    return jax.grad(lambda xx: u_theta(params, xx, t))(x)
 
 
 def u_xx(params, x, t):
@@ -50,12 +65,12 @@ def pde_residual(params, x, t, alpha):
     """
     return u_t(params, x, t) - alpha * u_xx(params, x, t)
 
-# Vectorize u_model over batches of x and t values
+# Vectorize theta over batches of x and t values
 # in_axes=(None, 0, 0) means:
 # - params is shared (not batched)
 # - x is batched along axis 0
 # - t is batched along axis 0
-u_model_vmap = jax.vmap(u_model, in_axes=(None, 0, 0))
+u_model_vmap = jax.vmap(u_theta, in_axes=(None, 0, 0))
 
 # Vectorize PDE residual the same way
 pde_residual_vmap = jax.vmap(pde_residual, in_axes=(None, 0, 0))

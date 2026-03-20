@@ -1,6 +1,6 @@
 import jax
 import jax.numpy as jnp
-from physics import pde_residual_vmap, u_model_vmap
+from src.physics import pde_residual_vmap, u_model_vmap
 
 def loss_fn(params, batch):
     """
