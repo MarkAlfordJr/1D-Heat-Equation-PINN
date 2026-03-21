@@ -2,7 +2,7 @@ import jax
 import jax.numpy as jnp
 import optax
 from functools import partial
-from src.losses import loss_fn
+from src.loss import loss_fn
 
 
 """
