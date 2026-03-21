@@ -55,8 +55,7 @@ def u_xx(params, x, t):
     """
     return jax.grad(lambda xx: u_x(params, xx, t))(x)
 
-
-def pde_residual(params, x, t, alpha):
+def pde_residual(params, x, t, alpha = config["alpha"]):
     """
     Heat equation residual:
         f(x,t) = u_t - alpha * u_xx

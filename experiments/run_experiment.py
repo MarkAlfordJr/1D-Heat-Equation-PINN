@@ -17,19 +17,19 @@ def run_experiment():
     config = load_config()
     
     optimizer = optax.adam(config["optimizer_learning_rate"])
+    print("this is the learning rate: {}".format(config["optimizer_learning_rate"]))
     
     # Create a master random key
-    key = jax.random.PRNGKey(0)
+    master_key = jax.random.PRNGKey(0)
 
     # Split it so one part initializes the network
-    key, init_key = jax.random.split(key)
+    key, init_key = jax.random.split(master_key)
 
     # Initialize neural network parameters
-    model = MLPModel(config, key)
+    model = MLPModel(config, init_key)
     params = model.init_mlp()
 
     # Start the training loop
-    utils = Utils(config, params)
-    trainer = Trainer(model, params, optimizer)
+    trainer = Trainer(model, params, optimizer, config)
     trainer.train_loop(key)
     print("running function")

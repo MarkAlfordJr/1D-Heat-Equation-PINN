@@ -10,11 +10,11 @@ class MLPModel():
         """
             Creates the Parameters needed for the NN forward pass
 
-            Args: 
-            - layers_size = layer dimension for the NN architecture
-            - key = a random key per layer
+            Inputs: 
+            - layers_size (from config)= layer dimension for the NN architecture
+            - key (from class arg) = a random key per layer
 
-            Returns:
+            Returns: 
             params = [(W1, b1), (W2, b2), ...]
                 where each W is a weight matrix and each b is a bias vector.
         """
@@ -36,12 +36,12 @@ class MLPModel():
         return params
     
     def mlp_forward(self, params, x):
-        """
+        """ 
             Forward passes the created Parameters in order to get a potential solution
 
-            Args: 
-            - params = array of weights and biases created from the NN architecture layers
-            - x = input vector of size (2,) since the PDE is u(x,t)
+            Inputs:
+            - params (input) = array of weights and biases created from the NN architecture layers
+            - x (input)= input vector of size (2,) since the PDE is u(x,t)
 
             Returns:
             scalar output = u(x,t). the potential solution to PDE that goes into the Physics Residual
