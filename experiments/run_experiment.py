@@ -1,5 +1,5 @@
 import yaml
-from src.models import MLPModel
+from src.model import MLPModel
 from src.train import Trainer
 import jax
 import jax.numpy as jnp
